@@ -32,7 +32,22 @@ def login(request):
                 msg = "token无效！"
         else:
             file_obj = request.FILES.get("file")    # 获取前端上传的文件
-            random_str = hashlib.md5(str(random.random()).encode()).hexdigest()
+            random_str = hashlib.md5(str(random.random()).encode()).hexdigest()     # 生成经过MD5加密的随机数
             print(random_str)
+            file_path = os.path.join('kubeconfig', random_str)  # 拼接路径
+            try:
+                with open(file_path, 'w', encoding="utf8") as f:
+                    data = file_obj.read().decode()     # bytes转str
+                    f.write(data)
+                print(r"%s" %file_path)
+                # 连接K8S
+                config.load_kube_config(r"%s" %file_path)
+                core_api = client.CoreApi()
+                
+            except Exception:
+                code = 1
+                msg = "认证文件无效"
+                os.remove(file_path)    # 删除无效文件
+
         res = {"code": code, "msg": msg}
         return JsonResponse(res)
