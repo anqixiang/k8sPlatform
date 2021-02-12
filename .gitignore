@@ -1,6 +1,5 @@
 ca.crt
-kubeconfig/*
-!kubeconfig/
+kubeconfig/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
