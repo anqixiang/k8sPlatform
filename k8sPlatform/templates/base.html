@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>{% block title %} {% endblock %}</title>
+  <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        .namespace {
+            margin-top: 10px;
+        }
+        .namespace select, .namespace option {
+            width: 150px;
+            height: 36px;
+            font-size: 20px;
+            color: #2F4056;
+        }
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+  <div class="layui-header layui-bg-cyan">
+    <div class="layui-logo" style="color: white;font-size: 26px;font-weight: bold">K8S管理平台</div>
+    <!-- 头部区域（可配合layui已有的水平导航） -->
+    <ul class="layui-nav layui-layout-left">
+        <div class="namespace">
+            <select name="namespace" id="nsSelect">
+            </select>
+        </div>
+    </ul>
+    <ul class="layui-nav layui-layout-right">
+      <li class="layui-nav-item">
+      </li>
+      <li class="layui-nav-item"><a href="/logout">注销</a></li>
+    </ul>
+  </div>
+
+  <!-- 框架设计 -->
+  <div class="layui-side layui-bg-black">
+    <div class="layui-side-scroll layui-bg-cyan">
+      <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+      <ul class="layui-nav layui-nav-tree layui-bg-cyan"  lay-filter="test">
+        <li class="layui-nav-item layui-nav-itemed">
+          <li class="layui-nav-item"><a href="">平台概述</a></li>
+          <li class="layui-nav-item">
+            <a class="" href="javascript:;">kubernetes</a>
+            <dl class="layui-nav-child">
+                <dd><a href="javascript:;">Nodes</a></dd>
+                <dd><a href="javascript:;">Namespaces</a></dd>
+                <dd><a href="javascript:;">PersistentVolumes</a></dd>
+            </dl>
+          </li>
+        </li>
+        <li class="layui-nav-item">
+          <a href="javascript:;">工作负载</a>
+          <dl class="layui-nav-child">
+            <dd><a href="javascript:;">Deployments</a></dd>
+            <dd><a href="javascript:;">DaemonSets</a></dd>
+            <dd><a href="javascript:;">StatefulSets</a></dd>
+            <dd><a href="javascript:;">Pods</a></dd>
+          </dl>
+        </li>
+        <li class="layui-nav-item">
+          <a href="javascript:;">负载均衡</a>
+          <dl class="layui-nav-child">
+            <dd><a href="javascript:;">Services</a></dd>
+            <dd><a href="javascript:;">Ingresses</a></dd>
+          </dl>
+        </li>
+        <li class="layui-nav-item">
+          <a href="javascript:;">存储与配置</a>
+          <dl class="layui-nav-child">
+            <dd><a href="javascript:;">PersistentVolumeClaims</a></dd>
+            <dd><a href="javascript:;">ConfigMaps</a></dd>
+            <dd><a href="javascript:;">Secrets</a></dd>
+          </dl>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="layui-body">
+    <!-- 内容主体区域 -->
+    <div style="padding: 15px;">
+        {% block content %} {% endblock %}
+    </div>
+  </div>
+
+  <div class="layui-footer">
+    <!-- 底部固定区域 -->
+    © https://kubernetes.io
+  </div>
+</div>
+<script src="/static/layui/layui.js"></script>
+{% block js %} {% endblock %}
+<script>
+//JavaScript代码区域
+layui.use(['element', 'layer'], function(){
+  var element = layui.element;
+  var $ = layui.jquery;
+  var layer = layui.layer;
+
+  $.ajax({
+      type: "GET",
+      url: {% url "namespace_api" %},
+      success: function (res) {
+          if(res.code == 0) {
+              for (let index in res.data) {
+                  row = res.data[index];
+                  $("#nsSelect").append('<option value=' + row.name + '>' + row.name + '</option>');
+              }
+              $("#nsSelect").val("default")     //设置默认值
+          } else {
+              layer.msg(res.msg);
+              $("#nsSelect").append('<option value=' + res.msg + '>' + res.msg + '</option>');
+              $("#nsSelect").attr("disabled", "disabled");
+          }
+      },
+      error: function (res) {
+          layer.msg("服务器接口异常!");
+      }
+  })
+
+  //将当前选择的命名空间保存到本地浏览器session存储
+  var storage = window.sessionStorage;
+  var namespace = storage.getItem("namespace");
+  var current_ns = $("#nsSelect").val();    //获取当前命名空间
+  if(namespace == null) {
+      storage.setItem("namespace", current_ns)
+  } else {
+      $("#nsSelect").val(namespace)
+  }
+  $("#nsSelect").change(function () {       //命名空间变化时触发
+      var current_ns = $("#nsSelect").val();
+      storage.setItem("namespace", current_ns);
+  })
+});
+</script>
+</body>
+</html>

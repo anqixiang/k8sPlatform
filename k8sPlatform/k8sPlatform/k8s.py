@@ -9,7 +9,7 @@ from kubernetes import client,config
 import os
 from django.shortcuts import redirect
 
-# 登录认证
+# 登录认证检查
 def auth_check(auth_type, str):
     if auth_type == "token":
         token = str
@@ -46,6 +46,21 @@ def self_login_required(func):
         else:
             return redirect('/login')
     return inner
+
+# 加载认证配置
+def load_auth_config(auth_type, str):
+    if auth_type ==  "token":
+        token = str
+        conf = client.Configuration()
+        conf.host = "https://192.168.137.2:6443"  # apiserver地址
+        conf.ssl_ca_cert = r"E:\学习\python\django\project\k8sPlatform\k8sPlatform\ca.crt"  # CA证书
+        conf.verify_ssl = True  # 启用证书验证，必须指定CA证书
+        conf.api_key = {"authorization": "Bearer " + token}  # 指定token
+        client.Configuration.set_default(conf)
+    elif auth_type == "kubeconfig":
+        file_name = str
+        file_path = os.path.join("kubeconfig", file_name)
+        config.load_kube_config(r"%s" % file_path)
 
 if __name__ == "__main__":
     run_code = 0

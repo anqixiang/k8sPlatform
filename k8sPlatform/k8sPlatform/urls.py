@@ -21,4 +21,6 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
     re_path('^$', views.index),
     re_path('^login/$', views.login),
+re_path('^logout/$', views.logout),
+    re_path('^namespace_api/$', views.namespace_api, name="namespace_api"),
 ]

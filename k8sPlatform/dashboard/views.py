@@ -1,6 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import JsonResponse
-from kubernetes import client,config
+from kubernetes import client
 import os,hashlib,random
 from k8sPlatform import k8s
 
@@ -36,10 +36,10 @@ def login(request):
                 with open(file_path, 'w', encoding="utf8") as f:
                     data = file_obj.read().decode()     # bytes转str
                     f.write(data)
-
             except Exception:
                 code = 1
                 msg = "文件类型错误！"
+                os.remove(file_path)
                 res = {"code": code, "msg": msg}
                 return JsonResponse(res)
             if k8s.auth_check("kubeconfig", random_str):
@@ -53,5 +53,37 @@ def login(request):
             else:
                 code = 1
                 msg = "认证文件无效！"
+                os.remove(file_path)
         res = {"code": code, "msg": msg}
         return JsonResponse(res)
+
+def logout(request):
+    request.session.flush()
+    return redirect(login)
+
+# 命名空间
+def namespace_api(request):
+    auth_type = request.session.get('auth_type')
+    token = request.session.get('token')
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
+    data = []
+    try:
+        for ns in core_api.list_namespace().items:
+            name = ns.metadata.name
+            labels = ns.metadata.labels
+            ctime = ns.metadata.creation_timestamp
+            namespace = {'name': name, 'labels': labels, 'ctime': ctime}
+            data.append(namespace)
+            code = 0
+            msg = '获取数据成功'
+    except Exception as e:
+        code = 1
+        status = getattr(e, "status")
+        if status == 403:
+            msg = "没有访问权限"
+        else:
+            msg = "获取数据失败"
+    count = len(data)
+    res = {'code': code, 'msg': msg, 'count': count, 'data': data}
+    return JsonResponse(res)
