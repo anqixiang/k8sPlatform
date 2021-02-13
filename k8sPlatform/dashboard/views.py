@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from django.http import JsonResponse
+from django.http import JsonResponse,QueryDict
 from kubernetes import client
 import os,hashlib,random
 from k8sPlatform import k8s
@@ -63,30 +63,38 @@ def logout(request):
 
 # 命名空间API
 def namespace_api(request):
-    auth_type = request.session.get('auth_type')
-    token = request.session.get('token')
-    k8s.load_auth_config(auth_type, token)
-    core_api = client.CoreV1Api()
-    data = []
-    try:
-        for ns in core_api.list_namespace().items:
-            name = ns.metadata.name
-            labels = ns.metadata.labels
-            ctime = ns.metadata.creation_timestamp
-            namespace = {'name': name, 'labels': labels, 'ctime': ctime}
-            data.append(namespace)
-            code = 0
-            msg = '获取数据成功'
-    except Exception as e:
-        code = 1
-        status = getattr(e, "status")
-        if status == 403:
-            msg = "没有访问权限"
-        else:
-            msg = "获取数据失败"
-    count = len(data)
-    res = {'code': code, 'msg': msg, 'count': count, 'data': data}
-    return JsonResponse(res)
+    if request.method == "GET":
+        auth_type = request.session.get('auth_type')
+        token = request.session.get('token')
+        k8s.load_auth_config(auth_type, token)
+        core_api = client.CoreV1Api()
+        data = []
+        try:
+            for ns in core_api.list_namespace().items:
+                name = ns.metadata.name
+                labels = ns.metadata.labels
+                ctime = ns.metadata.creation_timestamp
+                namespace = {'name': name, 'labels': labels, 'ctime': ctime}
+                data.append(namespace)
+                code = 0
+                msg = '获取数据成功'
+        except Exception as e:
+            code = 1
+            status = getattr(e, "status")
+            if status == 403:
+                msg = "没有访问权限"
+            else:
+                msg = "获取数据失败"
+        count = len(data)
+        res = {'code': code, 'msg': msg, 'count': count, 'data': data}
+        return JsonResponse(res)
+    elif request.method == "DELETE":
+        request_data = QueryDict(request.body)
+        print(request_data)
+        code = 0
+        msg = '删除成功'
+        res = {'code': code, 'msg': msg}
+        return JsonResponse(res)
 
 # 命名空间页面
 def namespace(request):

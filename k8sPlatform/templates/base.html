@@ -15,9 +15,13 @@
             font-size: 20px;
             color: #2F4056;
         }
+        .layui-table-cell {
+            height: inherit;
+        }
     </style>
 </head>
 <body class="layui-layout-body">
+{% csrf_token %}
 <div class="layui-layout layui-layout-admin">
   <div class="layui-header layui-bg-cyan">
     <div class="layui-logo" style="color: white;font-size: 26px;font-weight: bold">K8S管理平台</div>
@@ -31,7 +35,7 @@
     <ul class="layui-nav layui-layout-right">
       <li class="layui-nav-item">
       </li>
-      <li class="layui-nav-item"><a href="/logout">注销</a></li>
+      <li id="logout" class="layui-nav-item"><a href="/logout">注销</a></li>
     </ul>
   </div>
 
@@ -79,7 +83,7 @@
     </div>
   </div>
 
-  <div class="layui-body">
+  <div class="layui-body" style="color: #edeff0">
     <!-- 内容主体区域 -->
     <div style="padding: 15px;">
         {% block content %} {% endblock %}
@@ -103,6 +107,8 @@ layui.use(['element', 'layer'], function(){
   $.ajax({
       type: "GET",
       url: {% url "namespace_api" %},
+      timeout: 5000,        //单位毫秒
+      async: false,         //关闭异步
       success: function (res) {
           if(res.code == 0) {
               for (let index in res.data) {
@@ -117,7 +123,7 @@ layui.use(['element', 'layer'], function(){
           }
       },
       error: function (res) {
-          layer.msg("服务器接口异常!");
+          layer.msg("服务器接口异常!", {icon: 5});
       }
   })
 
@@ -133,7 +139,12 @@ layui.use(['element', 'layer'], function(){
   $("#nsSelect").change(function () {       //命名空间变化时触发
       var current_ns = $("#nsSelect").val();
       storage.setItem("namespace", current_ns);
-  })
+  });
+
+  $("#logout").click(function () {
+      storage.removeItem('namespace');
+  });
+
 });
 </script>
 </body>

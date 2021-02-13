@@ -3,9 +3,88 @@
 {% block nav-item-1 %}layui-nav-itemed{% endblock %}
 {% block nav-this-1-2 %}layui-this{% endblock %}
 {% block content %}
-命名空间
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table class="layui-hide" id="test" lay-filter="test"></table>
+
+        <script type="text/html" id="toolbarDemo">
+        </script>
+
+        <script type="text/html" id="barDemo">
+          <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+    </div>
+</div>
 {% endblock %}
 
 {% block js %}
+<script>
+layui.use('table', function(){
+  var table = layui.table;
+  var $ = layui.jquery;
 
+  table.render({
+    elem: '#test'
+    ,url:'{% url "namespace_api" %}'
+    ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+    ,defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+      title: '提示'
+      ,layEvent: 'LAYTABLE_TIPS'
+      ,icon: 'layui-icon-tips'
+    }]
+    ,title: '用户数据表'
+    ,cols: [[
+      {field:'name', title:'名称', fixed: 'left', unresize: true, sort: true}
+      ,{field:'labels', title:'标签', templet: labelsFormat}  //labelsFormat是函数名
+      ,{field:'ctime', title:'创建时间'}
+      ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+    ]]
+    ,page: true
+  });
+
+  //处理标签值
+  function labelsFormat(d) {
+      result = "";
+      if(d.labels == null) {
+          return "None"
+      } else {
+          for(let key in d.labels) {
+              result += '<span style="border:1px solid #d6e5ec;border-radius:8px">' +
+                  key + ":" + d.labels[key] + "</span><br>"
+          }
+          return result
+      }
+  }
+
+  //监听行工具事件
+  table.on('tool(test)', function(obj){
+    var data = obj.data;
+    //console.log(obj)
+    if(obj.event === 'del'){
+      layer.confirm('真的删除' + data["name"] + "命名空间吗？", function(index){
+          csrf_token = $('[name="csrfmiddlewaretoken"]').val()
+          $.ajax({
+              url: '{% url 'namespace_api' %}',
+              type: "DELETE",
+              data: data,
+              headers: {"X-CSRFToken": csrf_token},
+              success: function (res) {
+                  if(res.code == 0) {
+                      layer.msg(res.msg, {icon: 6});
+                      obj.del();        //在前端删除该数据
+                  } else {
+                      layer.msg(res.msg, {icon: 5});
+                  }
+              },
+              error: function () {
+                  layer.msg("接口异常", {icon: 5})
+              }
+          })
+      });
+    } else if(obj.event === 'yaml'){
+    }
+  });
+});
+</script>
 {% endblock %}
