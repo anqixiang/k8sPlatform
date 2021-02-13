@@ -61,7 +61,7 @@ def logout(request):
     request.session.flush()
     return redirect(login)
 
-# 命名空间
+# 命名空间API
 def namespace_api(request):
     auth_type = request.session.get('auth_type')
     token = request.session.get('token')
@@ -87,3 +87,7 @@ def namespace_api(request):
     count = len(data)
     res = {'code': code, 'msg': msg, 'count': count, 'data': data}
     return JsonResponse(res)
+
+# 命名空间页面
+def namespace(request):
+    return render(request, 'k8s/namespace.html')

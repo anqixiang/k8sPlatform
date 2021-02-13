@@ -14,13 +14,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # from django.contrib import admin
-from django.urls import path,re_path
+from django.urls import path,re_path,include
 from dashboard import views
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
     re_path('^$', views.index),
     re_path('^login/$', views.login),
-re_path('^logout/$', views.logout),
+    re_path('^logout/$', views.logout),
+    re_path('^namespace/$', views.namespace, name="namespace"),
     re_path('^namespace_api/$', views.namespace_api, name="namespace_api"),
+    re_path('^kubernetes/', include('k8s.urls')),
+    re_path('^workload/', include('workload.urls')),
+
 ]
